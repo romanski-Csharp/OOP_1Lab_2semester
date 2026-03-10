@@ -133,9 +133,9 @@ static void ShakerSort(int[] arr)
         for (int i = 0; i < arr.Length - 1; i++)
         {
             if (arr[i] > arr[i + 1])
-            {
-                return false;
+            {   
                 Console.WriteLine($"Метод '{name}' не відсортовує масив");
+                return false;
             }
         }
         return true;
