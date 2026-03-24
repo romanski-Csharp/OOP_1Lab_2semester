@@ -7,17 +7,23 @@ class Program
 {
     static long TestSort(string name, SortAlgorithm sortingMethod, int[] sourceArray)
     {
-            int[] arrayToSort = (int[])sourceArray.Clone();
+        int[] arrayToSort = (int[])sourceArray.Clone();
 
-            Stopwatch sw = new Stopwatch();
+        Stopwatch sw = new Stopwatch();
 
-            sw.Start();
-            sortingMethod(arrayToSort);
-            sw.Stop();
+        sw.Start();
+        sortingMethod(arrayToSort);
+        sw.Stop();
 
-            bool isCorrect = IsSorted(arrayToSort, name);
-            Console.WriteLine($"{name,-20} | Час: {sw.Elapsed.TotalMilliseconds,8} мс | ");
+        if (IsSorted(sourceArray.OrderBy(x=>x).ToArray(), arrayToSort, name))
+        {
+            Console.Write($"\n{name} | Час: {sw.ElapsedMilliseconds} мс | ");
             return sw.ElapsedMilliseconds;
+        }
+        else
+        {
+            return long.MaxValue;
+        }
     }
 
     static void Main()
@@ -27,21 +33,20 @@ class Program
         Random rnd = new Random();
         int[] data = Enumerable.Range(0, 2000).Select(x => rnd.Next(0, 10000)).ToArray();
 
-
         Console.WriteLine("Еталони:");
         
-
         long tEtaSelection = TestSort("Selection Sort", SelectionSort, data);
         long tEtaShaker = TestSort("Shaker Sort", ShakerSort, data);
         
-        Console.WriteLine(new string('-', 55));
-        Console.WriteLine("Порівняння алгоритмів сортування:");
+        Console.WriteLine("\n" + new string('-', 55) + "\nПорівняння алгоритмів сортування: ");
 
         long tStudentSelection = TestSort("Selection Sort Student", SelectionSortStudent, data);
-        Console.WriteLine(GetTimeStatus(tEtaSelection, tStudentSelection));
+        if(tStudentSelection != long.MaxValue) 
+            GetTimeStatus(tEtaSelection, tStudentSelection);
         
         long tStudentShaker = TestSort("Shaker Sort Student", ShakerSortStudent, data);
-        Console.WriteLine(GetTimeStatus(tEtaShaker, tStudentShaker));
+        if (tStudentShaker != long.MaxValue) 
+            GetTimeStatus(tEtaShaker, tStudentShaker);
     }
 
     static void SelectionSort(int[] arr)
@@ -60,89 +65,105 @@ class Program
 
     static void SelectionSortStudent(int[] arr)
     {
-        List<int> data = arr.ToList();
-        List<int> sortedList = new List<int>();
 
-        while (data.Count > 0)
+        int n = arr.Length;
+
+        for (int i = 0; i < n; i++)
         {
-            int minVal = data.Min();
+            int minIdx = i;
 
-            int minIdx = data.IndexOf(minVal);
-
-            sortedList.Add(minVal);
-            data.RemoveAt(minIdx);
+            for (int j = i + 1; j < n; j++)
+            {
+                if (arr[j] < arr[minIdx])
+                {
+                    minIdx = j;
+                }
+            }
+            Swap(arr, i, minIdx);
         }
-
-        arr = sortedList.ToArray();
+        int p = 0;
+        while(p < int.MaxValue)
+            p++;
     }
 
 
-static void ShakerSort(int[] arr)
+    static void ShakerSort(int[] arr)
     {
-        int left = 0, right = arr.Length - 1;
-        while (left <= right)
+        int left = 0;
+        int right = arr.Length - 1;
+
+        while (left < right) 
         {
+            bool swapped = false;
+
             for (int i = left; i < right; i++)
-                if (arr[i] > arr[i + 1]) Swap(arr, i, i + 1);
-            right--;
+            {
+                if (arr[i] > arr[i + 1])
+                {
+                    Swap(arr, i, i + 1);
+                    swapped = true;
+                }
+            }
+            right--; 
+
+            if (!swapped) break;
+
+            swapped = false;
+
             for (int i = right; i > left; i--)
-                if (arr[i - 1] > arr[i]) Swap(arr, i - 1, i);
+            {
+                if (arr[i - 1] > arr[i])
+                {
+                    Swap(arr, i - 1, i);
+                    swapped = true;
+                }
+            }
             left++;
+
+            if (!swapped) break;
         }
     }
     static void ShakerSortStudent(int[] arr)
     {
-        List<int> list = arr.ToList();
-        bool swapped = true;
+        int n = arr.Length;
 
-        while (swapped)
+        for (int k = 0; k < n / 2; k++)
         {
-            swapped = false;
-
-            for (int i = 0; i < list.Count - 1; i++)
+            for (int i = 0; i < n - 1; i++)
             {
-                if (list[i] > list[i + 1])
+                if (arr[i] > arr[i + 1])
                 {
-                    int temp = list[i];
-                    list.RemoveAt(i);
-                    list.Insert(i + 1, temp);
-                    swapped = true;
+                    Swap(arr, i, i + 1);
                 }
             }
 
-            if (!swapped) break;
-            swapped = false;
-
-            for (int i = list.Count - 2; i >= 0; i--)
+            for (int i = n - 2; i >= 0; i--)
             {
-                if (list[i] > list[i + 1])
+                if (arr[i] > arr[i + 1])
                 {
-                    int temp = list[i];
-                    list.RemoveAt(i);
-                    list.Insert(i + 1, temp);
-                    swapped = true;
+                    Swap(arr, i, i + 1);
                 }
             }
         }
-        arr = list.ToArray();
     }
+
     static void Swap(int[] arr, int i, int j) => (arr[i], arr[j]) = (arr[j], arr[i]);
 
-    static bool IsSorted(int[] arr, string name)
+    static bool IsSorted(int[] eta ,int[] arr, string name)
     {
         for (int i = 0; i < arr.Length - 1; i++)
         {
-            if (arr[i] > arr[i + 1])
+            if (arr[i] != eta[i])
             {   
-                Console.WriteLine($"Метод '{name}' не відсортовує масив");
+                Console.WriteLine($"{name} - не відсортував масив");
                 return false;
             }
         }
         return true;
     }
-    static string GetTimeStatus(long tEta, long tStd)
+    static void GetTimeStatus(long tEta, long tStd)
     {
         bool status = Math.Max(0, tEta / 5 - 200) <= tStd && tStd <= tEta / 5 + 200;
-        return status ? "OK" : "Time limit Exceed!";
+        Console.WriteLine("Статус: " + (status ? "OK" : "Time limit Exceed!"));
     }
 }
